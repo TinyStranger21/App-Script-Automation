@@ -1,0 +1,14 @@
+{
+  "name": "kais-bus-tracker-proxy",
+  "version": "1.0.0",
+  "description": "Local proxy server for Kai's Bus Tracker to call Google Apps Script without CORS issues.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.0"
+  }
+}
+

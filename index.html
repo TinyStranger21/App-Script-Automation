@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Commute Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="card">
+    <h1>Commute Time Checker</h1>
+    <p class="subtitle">Enter a start and end address to estimate your trip.</p>
+
+    <div class="field">
+      <label for="home">From</label>
+      <input id="home" type="text" placeholder="e.g. 3400 Baseline Rd, Boulder, CO" />
+    </div>
+
+    <div class="field">
+      <label for="work">To</label>
+      <input id="work" type="text" placeholder="e.g. 1301 Walnut St, Boulder, CO" />
+    </div>
+
+    <button id="checkBtn">
+      Check commute
+    </button>
+
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    // Call the local Node proxy instead of Apps Script directly
+    const SCRIPT_URL = "http://localhost:3000/commute";
+
+    const checkCommute = async (homeAddress, workAddress) => {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json;charset=utf-8",
+        },
+        body: JSON.stringify({
+          home: homeAddress,
+          work: workAddress,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        return data.data; // { duration, departure, arrival }
+      } else {
+        throw new Error(data.message || "Unknown error from script");
+      }
+    };
+
+    const homeInput = document.getElementById("home");
+    const workInput = document.getElementById("work");
+    const resultDiv = document.getElementById("result");
+    const checkBtn = document.getElementById("checkBtn");
+
+    checkBtn.addEventListener("click", async () => {
+      const home = homeInput.value.trim();
+      const work = workInput.value.trim();
+
+      if (!home || !work) {
+        resultDiv.innerHTML = '<span class="error">Please enter both addresses.</span>';
+        return;
+      }
+
+      checkBtn.disabled = true;
+      resultDiv.innerHTML = '<span class="label">Checking commute...</span>';
+
+      try {
+        const commute = await checkCommute(home, work);
+        resultDiv.innerHTML =
+          '<span class="label">Departure: </span>' +
+          `<span class="value">${commute.departure}</span><br>` +
+          '<span class="label">Arrival: </span>' +
+          `<span class="value">${commute.arrival}</span><br>` +
+          '<span class="label">Duration: </span>' +
+          `<span class="value">${commute.duration}</span>`;
+      } catch (err) {
+        console.error(err);
+        resultDiv.innerHTML = '<span class="error">Could not fetch commute. Check console for details.</span>';
+      } finally {
+        checkBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
